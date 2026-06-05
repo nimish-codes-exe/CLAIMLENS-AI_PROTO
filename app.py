@@ -1,6 +1,8 @@
 import sys, os
 
 sys.path.insert(0, os.path.dirname(__file__))
+import hashlib
+
 
 import time
 import streamlit as st
@@ -16,6 +18,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+if "blockchain_records" not in st.session_state:
+    st.session_state.blockchain_records = []
 
 st.markdown("""
 <style>
@@ -345,6 +349,8 @@ def render_pipeline(active_step: int = -1, done: bool = False):
             )
 
 
+
+
 def make_gauge(value: float, title: str, color: str = "#00e5ff",
                max_val: float = 100, suffix: str = "") -> go.Figure:
     fig = go.Figure(go.Indicator(
@@ -527,6 +533,23 @@ if analyze_btn and claim_text.strip():
     )
     trust_score = score_data["trust_score"]
     verdict = get_verdict(trust_score)
+
+    claim_hash = hashlib.sha256(
+        claim_text.encode()
+    ).hexdigest()
+
+    tx_record = {
+        "claim_hash": claim_hash,
+        "trust_score": round(trust_score, 2),
+        "verdict": verdict["verdict"],
+        "timestamp": time.time()
+    }
+
+    st.session_state.blockchain_records.append(tx_record)
+
+    st.success(
+        f"⛓ Claim fingerprint stored: {claim_hash[:16]}..."
+    )
 
     if show_pipeline:
         with pipeline_placeholder.container():
@@ -841,6 +864,17 @@ if analyze_btn and claim_text.strip():
 
 elif analyze_btn:
     st.warning("⚠️ Please enter a claim to analyze.")
+st.markdown("## ⛓ Blockchain Explorer")
+if st.session_state.blockchain_records:
+
+    blockchain_df = pd.DataFrame(
+        st.session_state.blockchain_records
+    )
+
+    st.dataframe(
+        blockchain_df,
+        use_container_width=True
+    )
 
 st.markdown("<br><br>", unsafe_allow_html=True)
 st.markdown("---")

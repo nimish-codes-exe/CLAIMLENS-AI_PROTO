@@ -1,5 +1,13 @@
-.venv/
 __pycache__/
-reports/
-.idea/
 *.pyc
+.venv/
+venv/
+
+.env
+
+reports/
+*.pdf
+
+.idea/
+
+.DS_Store
